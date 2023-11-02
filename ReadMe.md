@@ -7,7 +7,7 @@ Dans ce projet nous allons appliquer les algos suivants sur forzenLake:
 - [ ] Delayed Q-learning
 - [ ] DQN learning
 
-Pour comparer les different algorithms, on peut utiliser les metriques suivants:
+Pour comparer les different algorithmes, on peut utiliser les metriques suivants:
 
 - Longueur d’episode: c’est a dire en combien d’etapes l’agent est capable a terminer l’episode (en gagnant)
 - Taux de reussite: On peut - apres avoir appris le model - lancer plusieurs episodes de test, et calculer le taux de reussite, par exemple sur 100 episodes de test on a 75 episodes reussis, donc l’agent du model a un taux de reussite de 75%.
