@@ -22,7 +22,7 @@ gamma = args.gamma
 num_episodes = args.num_episodes
 
 # Create the environment
-env = gym.make('FrozenLake-v1', is_slippery=False)
+env = gym.make('FrozenLake-v1', is_slippery=True)
 
 # Initialize the Q-table
 Q = np.zeros([env.observation_space.n, env.action_space.n])
@@ -34,7 +34,7 @@ success_rate = []
 test_reward = []
 
 # early stopping
-average_reward_threshold = 0.5
+average_reward_threshold = 0.2
 consecutive_episodes = 200  # Number of episodes to consider for moving average
 moving_average_rewards = []
 
@@ -106,6 +106,29 @@ print('Post-Training Success rate (%):', post_training_success_rate * 100)
 
 # Print the computational efficiency
 print('Training Time (seconds):', training_time)
+
+# Function to visualize the agent playing
+def play_game(env, Q):
+    s = env.reset()
+    env.render()
+    done = False
+    while not done:
+        a = np.argmax(Q[s, :])
+        s, r, done, _ = env.step(a)
+        env.render()
+        if done:
+            if r == 1:
+                print("The agent reached the goal!")
+            else:
+                print("The agent fell into a hole!")
+            time.sleep(2)
+    env.close()
+
+# Call the play_game function to visualize the agent playing
+play_game(env, Q)
+
+
+
 
 # Plotting the averge rewards and episode Lengths gained throughout each episode per episode
 fig, axs = plt.subplots(1, 2, figsize=(200, 5))
