@@ -21,7 +21,7 @@ lr = args.lr
 gamma = args.gamma
 num_episodes = args.num_episodes
 
-negative_reward_enabled = False
+negative_reward_enabled = True
 is_slippery_enabled = True
 
 # early stopping
