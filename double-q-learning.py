@@ -21,6 +21,11 @@ rewards_list = []
 steps_list = []
 success_list = []
 
+# early stopping
+average_reward_threshold = 0.5
+consecutive_episodes = 200  # Number of episodes to consider for moving average
+moving_average_rewards = []
+
 # Start time
 start_time = time.time()
 
@@ -65,6 +70,16 @@ for i in range(num_episodes):
     steps_list.append(steps)
     success_list.append(1 if total_reward > 0 else 0)
 
+        # Calculate moving average reward
+    if i >= consecutive_episodes:
+        moving_avg_reward = np.mean(rewards_list[-consecutive_episodes:])
+        moving_average_rewards.append(moving_avg_reward)
+        
+        # Check if the moving average reward exceeds the threshold
+        if moving_avg_reward >= average_reward_threshold:
+            print(f"Early stopping: Episode {i+1}, Moving Average Reward: {moving_avg_reward}")
+            break
+
 # Calculate training time
 end_time = time.time()
 training_time = end_time - start_time
@@ -95,3 +110,12 @@ print("Overall Average number of steps:", np.mean(steps_list))
 print("Success rate (%):", np.mean(success_list) * 100)
 print('Post-Training Success rate (%):', post_training_success_rate * 100)
 print('Training Time (seconds):', training_time)
+
+# Plotting the averge rewards and episode Lengths gained throughout each episode per episode
+fig, axs = plt.subplots(1, 2, figsize=(200, 5))
+axs[0].plot(rewards_list, 'tab:green')
+axs[0].set_title('Reward per Episode')
+axs[1].plot(steps_list, 'tab:purple')
+axs[1].set_title('number of steps taken per episode')
+
+plt.show()

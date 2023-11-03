@@ -38,25 +38,39 @@ average_reward_threshold = 0.5
 consecutive_episodes = 200  # Number of episodes to consider for moving average
 moving_average_rewards = []
 
+# Hyperparameters for Delayed Q-learning
+delay_step = 50  # Update the Q-table every delay_step steps
+
 start_time = time.time()
 
-# Run the Q-learning algorithm
+# Run the delayed Q-learning algorithm
 for i in range(num_episodes):
     s = env.reset()
     done = False
     episode_reward = 0
     num_steps = 0
-    
-    # The Q-Table learning algorithm
+    steps_since_update = 0  # Track the number of steps since the last Q-table update
+
+    # Store the experiences for delayed update
+    experiences = []
+
     while not done:
-        a = np.argmax(Q[s,:] + np.random.randn(1,env.action_space.n)*(1./(i+1)))
+        a = np.argmax(Q[s, :] + np.random.randn(1, env.action_space.n) * (1. / (i + 1)))
         s_, r, done, _ = env.step(a)
-        
-        # update Q values
-        Q[s,a] = Q[s,a] + lr*(r + gamma*np.max(Q[s_,:]) - Q[s,a])
+        experiences.append((s, a, r, s_))  # Store the transition
+
         s = s_
         episode_reward += r
         num_steps += 1
+        steps_since_update += 1
+
+        # Perform a delayed update of the Q-table
+        if steps_since_update >= delay_step or done:
+            for exp in experiences:
+                state, action, reward, next_state = exp
+                Q[state, action] = Q[state, action] + lr * (reward + gamma * np.max(Q[next_state, :]) - Q[state, action])
+            steps_since_update = 0
+            experiences = []
     
     # append the total reward for the episode, not the average per step
     total_rewards.append(episode_reward)
