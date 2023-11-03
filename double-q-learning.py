@@ -8,7 +8,7 @@ lr = 0.1
 gamma = 0.95
 num_episodes = 100000
 
-negative_reward_enabled = True
+negative_reward_enabled = False
 is_slippery_enabled = True
 
 # early stopping
@@ -38,6 +38,8 @@ success_list = []
 
 # Start time
 start_time = time.time()
+
+episodes_to_train = num_episodes
 
 # Training process
 for i in range(num_episodes):
@@ -92,31 +94,45 @@ for i in range(num_episodes):
         # Check if the moving average reward exceeds the threshold
         if moving_avg_reward >= average_reward_threshold:
             print(f"Early stopping: Episode {i+1}, Moving Average Reward: {moving_avg_reward}")
+            episodes_to_train = i + 1
             break
 
 # Calculate training time
 end_time = time.time()
 training_time = end_time - start_time
 
-# Post-training test of the policy
 def test_policy(Q1, Q2, num_tests=100, verbose=False):
     success_count = 0
+    total_steps_for_success = 0  # Initialize total steps for successful episodes
+
     for test in range(num_tests):
         state = env.reset()
         done = False
+        steps = 0  # Initialize steps for this test
+
         while not done:
             action = np.argmax(Q1[state, :] + Q2[state, :])
             state, reward, done, _ = env.step(action)
+            steps += 1  # Increment steps
+
             if done:
                 if reward == 1.0:  # Success
                     success_count += 1
+                    total_steps_for_success += steps  # Add steps to total for successful episodes
                 break
+
         if verbose:
-            print(f"Test {test+1}: {'Success' if reward == 1.0 else 'Fail'}")
-    return success_count / num_tests
+            print(f"Test {test+1}: {'Success' if reward == 1.0 else 'Fail'} with steps: {steps}")
+
+    average_steps_for_success = 0
+    if success_count > 0:
+        average_steps_for_success = total_steps_for_success / success_count
+
+    # Return both success rate and average steps for success
+    return success_count / num_tests, average_steps_for_success
 
 # Adjust the verbosity to True if you want to see the outcome of each test
-post_training_success_rate = test_policy(Q1, Q2, verbose=False)
+post_training_success_rate, average_steps_success = test_policy(Q1, Q2, verbose=False)
 
 print('----------------------------------------------------------')
 print("Overall Average reward:", np.mean(rewards_list))
@@ -124,6 +140,15 @@ print("Overall Average number of steps:", np.mean(steps_list))
 print("Success rate (%):", np.mean(success_list) * 100)
 print('Post-Training Success rate (%):', post_training_success_rate * 100)
 print('Training Time (seconds):', training_time)
+
+print('')
+print('2Q-Learning with Negative reward: ', negative_reward_enabled, '; and slippery: ', is_slippery_enabled)
+print('==========================================================')
+print('The number of episodes', episodes_to_train)
+print('Post-Training Success rate (%):', post_training_success_rate * 100)
+print('Average number of steps when winning:', average_steps_success)
+print('Training Time (seconds):', training_time)
+print('==========================================================')
 
 # Plotting the averge rewards and episode Lengths gained throughout each episode per episode
 fig, axs = plt.subplots(1, 2, figsize=(200, 5))
