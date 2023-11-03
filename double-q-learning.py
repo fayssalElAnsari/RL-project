@@ -6,11 +6,25 @@ import time
 # Hyperparameters
 lr = 0.1
 gamma = 0.95
-num_episodes = 20000
-epsilon_decay = 0.999
+num_episodes = 100000
 
-# Environment setup
-env = gym.make('FrozenLake-v1', is_slippery=False)
+negative_reward_enabled = True
+is_slippery_enabled = True
+
+# early stopping
+average_reward_threshold = 0.75
+consecutive_episodes = 100  # Number of episodes to consider for moving average
+moving_average_rewards = []
+
+custom_map = [
+    'SFFF',
+    'FHFF',
+    'FFHF',
+    'HFGF'
+]
+
+# Create the environment
+env = gym.make('FrozenLake-v1', desc=custom_map, is_slippery=is_slippery_enabled)
 
 # Initialize Q-tables for Double Q-Learning
 Q1 = np.zeros([env.observation_space.n, env.action_space.n])
@@ -21,10 +35,6 @@ rewards_list = []
 steps_list = []
 success_list = []
 
-# early stopping
-average_reward_threshold = 0.5
-consecutive_episodes = 200  # Number of episodes to consider for moving average
-moving_average_rewards = []
 
 # Start time
 start_time = time.time()
@@ -46,6 +56,11 @@ for i in range(num_episodes):
 
         # Take action and observe reward and next state
         next_state, reward, done, _ = env.step(action)
+
+        if negative_reward_enabled:
+            if done and reward == 0:  # The agent fell into a hole and not at the goal state
+                reward = -1  # Negative reward for falling into a hole
+
         total_reward += reward
         steps += 1
 
@@ -70,7 +85,10 @@ for i in range(num_episodes):
     steps_list.append(steps)
     success_list.append(1 if total_reward > 0 else 0)
 
-        # Calculate moving average reward
+    # Print episode metrics
+    print("Episode:", i+1, "Reward:", total_reward, "Steps:", steps)
+
+    # Calculate moving average reward
     if i >= consecutive_episodes:
         moving_avg_reward = np.mean(rewards_list[-consecutive_episodes:])
         moving_average_rewards.append(moving_avg_reward)
