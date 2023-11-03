@@ -21,8 +21,23 @@ lr = args.lr
 gamma = args.gamma
 num_episodes = args.num_episodes
 
+negative_reward_enabled = True
+is_slippery_enabled = True
+
+# early stopping
+average_reward_threshold = 0.75
+consecutive_episodes = 100  # Number of episodes to consider for moving average
+moving_average_rewards = []
+
+custom_map = [
+    'SFFF',
+    'FHFF',
+    'FFHF',
+    'HFGF'
+]
+
 # Create the environment
-env = gym.make('FrozenLake-v1', is_slippery=False)
+env = gym.make('FrozenLake-v1', desc=custom_map, is_slippery=is_slippery_enabled)
 
 # Initialize the Q-table
 Q = np.zeros([env.observation_space.n, env.action_space.n])
@@ -33,13 +48,8 @@ total_steps = []
 success_rate = []
 test_reward = []
 
-# early stopping
-average_reward_threshold = 0.5
-consecutive_episodes = 200  # Number of episodes to consider for moving average
-moving_average_rewards = []
-
 # Hyperparameters for Delayed Q-learning
-delay_step = 50  # Update the Q-table every delay_step steps
+delay_step = 10  # Update the Q-table every delay_step steps
 
 start_time = time.time()
 
@@ -57,6 +67,11 @@ for i in range(num_episodes):
     while not done:
         a = np.argmax(Q[s, :] + np.random.randn(1, env.action_space.n) * (1. / (i + 1)))
         s_, r, done, _ = env.step(a)
+
+        if negative_reward_enabled:
+            if done and r == 0:  # The agent fell into a hole and not at the goal state
+                r = -1  # Negative reward for falling into a hole
+
         experiences.append((s, a, r, s_))  # Store the transition
 
         s = s_

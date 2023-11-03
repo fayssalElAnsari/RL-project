@@ -45,14 +45,10 @@ for i in range(num_episodes):
     total_reward = 0
     steps = 0
     done = False
-    epsilon = 1.0 / (i / 8000 + 1)
 
     while not done:
-        # Epsilon-greedy action selection
-        if np.random.rand() < epsilon:
-            action = env.action_space.sample()
-        else:
-            action = np.argmax(Q1[state, :] + Q2[state, :])
+        random_noise = np.random.randn(1, env.action_space.n) * (1. / (i + 1))
+        action = np.argmax((Q1[state, :] + Q2[state, :]) / 2 + random_noise)
 
         # Take action and observe reward and next state
         next_state, reward, done, _ = env.step(action)
